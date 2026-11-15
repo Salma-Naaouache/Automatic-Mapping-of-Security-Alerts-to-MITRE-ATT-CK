@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATT&amp;CK Mapper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0f17; --bg2:#0f1520; --panel:#121a27; --panel2:#172133; --line:#223049; --line2:#2c3d5c;
+  --text:#e6ecf5; --muted:#8b9ab3; --faint:#5d6c86;
+  --accent:#ff5a3c; --accent2:#ff9b3d; --ok:#2fd39a; --warn:#f5b83d; --low:#7a8aa6; --info:#5aa9ff;
+  --grad:linear-gradient(135deg,#ff5a3c 0%,#ff9b3d 100%);
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --heat0:#16202f; --heat1:#3a2a2a; --heat2:#7a3524; --heat3:#c4471f; --heat4:#ff6a2b;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+  --bg:#f4f6fa; --bg2:#eef1f7; --panel:#ffffff; --panel2:#f6f8fc; --line:#e1e6ef; --line2:#cfd7e6;
+  --text:#121826; --muted:#58657c; --faint:#8a96ab; --shadow:0 8px 24px rgba(20,30,60,.08);
+  --heat0:#eef1f7; --heat1:#ffe3d6; --heat2:#ffb999; --heat3:#ff8455; --heat4:#ee4a1c;
+}}
+:root[data-theme="light"]{
+  --bg:#f4f6fa; --bg2:#eef1f7; --panel:#ffffff; --panel2:#f6f8fc; --line:#e1e6ef; --line2:#cfd7e6;
+  --text:#121826; --muted:#58657c; --faint:#8a96ab; --shadow:0 8px 24px rgba(20,30,60,.08);
+  --heat0:#eef1f7; --heat1:#ffe3d6; --heat2:#ffb999; --heat3:#ff8455; --heat4:#ee4a1c;
+}
+*{box-sizing:border-box} html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.5 var(--sans);-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(1200px 500px at 85% -10%,rgba(255,90,60,.10),transparent 60%),radial-gradient(900px 400px at -10% 0%,rgba(90,169,255,.07),transparent 60%);
+  background-attachment:fixed;min-height:100vh}
+a{color:var(--info);text-decoration:none} a:hover{text-decoration:underline}
+code,.mono{font-family:var(--mono)}
+/* ---------- top bar ---------- */
+header{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 78%,transparent);border-bottom:1px solid var(--line)}
+.bar{max-width:1400px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:18px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:-.02em;font-size:17px}
+.brand small{display:block;font-weight:500;color:var(--muted);font-size:11.5px;letter-spacing:0}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--grad);display:grid;place-items:center;box-shadow:0 6px 18px rgba(255,90,60,.35)}
+nav{display:flex;gap:4px;margin-left:18px;flex-wrap:wrap}
+nav button{background:none;border:0;color:var(--muted);font:600 13px var(--sans);padding:8px 12px;border-radius:8px;cursor:pointer}
+nav button:hover{color:var(--text);background:var(--panel2)}
+nav button.active{color:var(--text);background:var(--panel);box-shadow:inset 0 0 0 1px var(--line2)}
+.spacer{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--muted);font-size:12px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.iconbtn{background:var(--panel);border:1px solid var(--line);color:var(--text);width:34px;height:34px;border-radius:9px;cursor:pointer;display:grid;place-items:center}
+/* ---------- layout ---------- */
+main{max-width:1400px;margin:0 auto;padding:22px 24px 60px}
+.view{display:none} .view.active{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.grid{display:grid;grid-template-columns:minmax(340px,5fr) 7fr;gap:20px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.card-h{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.card-h h2{font-size:13px;margin:0;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.card-b{padding:18px}
+.stack>*+*{margin-top:20px}
+textarea{width:100%;min-height:210px;resize:vertical;background:var(--bg2);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:14px;font:13px/1.55 var(--mono);outline:none;transition:border-color .15s,box-shadow .15s}
+textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{border:0;border-radius:10px;padding:10px 18px;font:700 13.5px var(--sans);cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.btn.primary{background:var(--grad);color:#fff;box-shadow:0 6px 20px rgba(255,90,60,.35)}
+.btn.primary:hover{filter:brightness(1.07)} .btn:disabled{opacity:.6;cursor:wait}
+.btn.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line2)}
+.btn.small{padding:6px 11px;font-size:12px;border-radius:8px}
+select{background:var(--panel2);color:var(--text);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font:600 12.5px var(--sans)}
+.kbd{font:600 11px var(--mono);color:var(--faint);border:1px solid var(--line2);border-radius:5px;padding:1px 5px}
+.samples{display:flex;flex-wrap:wrap;gap:6px}
+.samples button{background:var(--panel2);border:1px dashed var(--line2);color:var(--muted);border-radius:999px;padding:5px 11px;font:600 12px var(--sans);cursor:pointer}
+.samples button:hover{color:var(--text);border-color:var(--accent)}
+.label{font-size:11.5px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px}
+/* ---------- results ---------- */
+.empty{display:grid;place-items:center;text-align:center;color:var(--muted);padding:60px 20px}
+.empty svg{opacity:.5;margin-bottom:12px}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+.ring{width:118px;height:118px;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring .v{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring .v b{font-size:26px;font-weight:800;letter-spacing:-.03em}
+.ring .v span{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:-4px}
+.tid{font:700 13px var(--mono);color:var(--accent2);letter-spacing:.02em}
+.tname{font-size:24px;font-weight:800;letter-spacing:-.025em;margin:2px 0 10px;line-height:1.2}
+.pill{display:inline-flex;align-items:center;padding:3px 9px;border-radius:6px;font-size:11.5px;font-weight:700;background:color-mix(in srgb,var(--info) 14%,transparent);color:var(--info);margin:0 6px 6px 0;border:1px solid color-mix(in srgb,var(--info) 30%,transparent)}
+.conf{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.conf.high{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.conf.medium{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.conf.low{background:color-mix(in srgb,var(--low) 18%,transparent);color:var(--low)}
+.subs{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.sub{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:12.5px}
+.sub b{font-family:var(--mono);color:var(--accent2);margin-right:6px;font-size:11.5px}
+.chain{display:grid;grid-template-columns:repeat(15,1fr);gap:4px}
+.chain div{height:58px;border-radius:7px;background:var(--heat0);position:relative;display:flex;align-items:flex-end;padding:5px;font-size:9.5px;font-weight:700;line-height:1.15;color:var(--muted);overflow:hidden;border:1px solid var(--line)}
+.chain div.on{color:#fff;border-color:transparent}
+.chain div i{position:absolute;top:5px;right:6px;font-style:normal;font-family:var(--mono);font-size:9.5px;opacity:.9}
+.rank{width:100%;border-collapse:collapse}
+.rank td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.rank tr:last-child td{border-bottom:0}
+.rank tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.rank .n{font:700 12px var(--mono);color:var(--faint);width:28px;text-align:center}
+.rank .nm{font-weight:600} .rank .nm small{display:block;color:var(--muted);font-weight:500;font-size:11.5px}
+.bar{height:7px;background:var(--panel2);border-radius:99px;overflow:hidden;min-width:90px}
+.bar>span{display:block;height:100%;background:var(--grad);border-radius:99px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.pm{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.pm span{font:600 10.5px var(--mono);color:var(--muted);background:var(--panel2);border-radius:5px;padding:1px 6px}
+.pm span b{color:var(--text)}
+.ev{font:13px/1.9 var(--mono);background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;word-break:break-word}
+.ev mark{background:rgba(255,106,43,var(--a));color:inherit;border-radius:4px;padding:1px 2px}
+.terms{display:flex;gap:6px;flex-wrap:wrap}
+.term{font:600 12px var(--mono);padding:4px 9px;border-radius:7px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent2);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent)}
+.ioc{display:grid;grid-template-columns:90px 1fr;gap:6px 12px;font-size:12.5px}
+.ioc dt{color:var(--faint);font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.06em;padding-top:2px}
+.ioc dd{margin:0;font-family:var(--mono);word-break:break-all}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.meta{color:var(--muted);font-size:12px}
+/* ---------- report ---------- */
+.rep{font-size:14px;line-height:1.85}
+.rep .s{border-radius:4px;padding:1px 2px;cursor:default;transition:background .15s}
+.rep .s.hit{background:color-mix(in srgb,var(--c) 22%,transparent);box-shadow:inset 0 -2px 0 var(--c)}
+.rep .s.hit:hover{background:color-mix(in srgb,var(--c) 38%,transparent)}
+.rep .tag{font:700 10px var(--mono);color:#fff;background:var(--c);border-radius:4px;padding:0 4px;margin-left:3px;vertical-align:1px}
+.techlist{display:flex;flex-direction:column;gap:8px}
+.techitem{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.sw{width:10px;height:28px;border-radius:3px;background:var(--c);flex:none}
+.count{margin-left:auto;font:800 18px var(--mono)}
+/* ---------- matrix ---------- */
+.matrix{display:grid;grid-template-columns:repeat(15,minmax(92px,1fr));gap:5px;overflow-x:auto;padding-bottom:6px}
+.mcol h4{margin:0 0 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);height:30px;line-height:1.2}
+.mcell{font-size:10px;line-height:1.2;padding:5px 6px;border-radius:5px;margin-bottom:4px;background:var(--heat0);color:var(--faint);border:1px solid var(--line);min-height:30px}
+.mcell.m{color:var(--muted)}
+.mcell.h1{background:var(--heat1);color:var(--text)} .mcell.h2{background:var(--heat2);color:#fff}
+.mcell.h3{background:var(--heat3);color:#fff} .mcell.h4{background:var(--heat4);color:#fff;font-weight:700}
+.mcell b{font-family:var(--mono);display:block;font-size:9.5px;opacity:.85}
+table.data{width:100%;border-collapse:collapse;font-size:13px}
+table.data th{text-align:left;color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.07em;padding:10px;border-bottom:1px solid var(--line2)}
+table.data td{padding:10px;border-bottom:1px solid var(--line)}
+table.data td.num{font-family:var(--mono);text-align:right}
+table.data th.num{text-align:right}
+table.data td.best{color:var(--ok);font-weight:700}
+table.data tr.ens td{background:color-mix(in srgb,var(--accent) 7%,transparent);font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi{padding:16px 18px} .kpi b{font-size:30px;font-weight:800;letter-spacing:-.03em;display:block}
+.kpi span{color:var(--muted);font-size:12px;font-weight:600}
+pre.code{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto;font:12.5px/1.6 var(--mono);margin:0}
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.err{color:var(--accent);font-weight:600}
+@media (max-width:1050px){.grid,.two{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}nav{margin-left:0}.bar{flex-wrap:wrap}}
+@media (max-width:600px){main{padding:16px}.bar{padding:10px 16px}.chain{grid-template-columns:repeat(5,1fr)}.hero{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div class="brand">
+    <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg></div>
+    <div>ATT&amp;CK Mapper<small>Alerts &amp; CTI → MITRE ATT&amp;CK</small></div>
+  </div>
+  <nav id="tabs">
+    <button data-v="alert" class="active">Alert triage</button>
+    <button data-v="report">CTI report</button>
+    <button data-v="batch">Batch &amp; matrix</button>
+    <button data-v="bench">Benchmarks</button>
+    <button data-v="api">API</button>
+  </nav>
+  <div class="spacer"></div>
+  <span class="chip" id="status"><span class="dot" style="background:var(--warn)"></span>connecting…</span>
+  <button class="iconbtn" id="theme" title="Toggle theme" aria-label="Toggle theme"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg></button>
+</div></header>
+
+<main>
+<!-- ================= ALERT ================= -->
+<section class="view active" id="v-alert">
+  <div class="grid">
+    <div class="stack">
+      <div class="card">
+        <div class="card-h"><h2>Security alert / log / CTI excerpt</h2></div>
+        <div class="card-b stack">
+          <textarea id="alertText" spellcheck="false" placeholder="Paste a SIEM alert, EDR detection, log line or threat-intel sentence…"></textarea>
+          <div>
+            <p class="label">Try an example</p>
+            <div class="samples" id="presets"></div>
+          </div>
+          <div class="row">
+            <button class="btn primary" id="mapBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 5 5L20 7"/></svg>Map to ATT&amp;CK</button>
+            <select id="topk" aria-label="Top k"><option>3</option><option selected>5</option><option>10</option></select>
+            <span class="kbd">Ctrl</span><span class="kbd">↵</span>
+            <div class="spacer"></div>
+            <span class="meta" id="lat"></span>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="iocCard" hidden>
+        <div class="card-h"><h2>Extracted indicators</h2></div>
+        <div class="card-b"><dl class="ioc" id="iocs"></dl></div>
+      </div>
+      <div class="card" id="ltCard" hidden>
+        <div class="card-h"><h2>Long-tail candidates</h2><span class="meta">zero-shot · outside trained label space</span></div>
+        <div class="card-b"><div class="techlist" id="longtail"></div></div>
+      </div>
+    </div>
+
+    <div class="stack" id="alertOut">
+      <div class="card"><div class="empty">
+        <div><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <div style="font-weight:700;color:var(--text);font-size:15px">No alert mapped yet</div>
+        <div>Paste an alert on the left or pick an example — the ensemble of BERT, RoBERTa,<br>Sentence-Transformer, BiLSTM &amp; TF-IDF will rank ATT&amp;CK techniques.</div></div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= REPORT ================= -->
+<section class="view" id="v-report">
+  <div class="grid">
+    <div class="card">
+      <div class="card-h"><h2>Threat-intelligence report</h2></div>
+      <div class="card-b stack">
+        <textarea id="reportText" style="min-height:360px;font-family:var(--sans);font-size:13.5px" placeholder="Paste a full CTI report. It is split into sentences, each sentence is mapped, and the results are aggregated."></textarea>
+        <div class="row">
+          <button class="btn primary" id="repBtn">Analyse report</button>
+          <button class="btn ghost small" id="repSample">Load sample report</button>
+          <div class="spacer"></div>
+          <label class="meta">min confidence <select id="repMin"><option>0.2</option><option selected>0.3</option><option>0.5</option></select></label>
+        </div>
+      </div>
+    </div>
+    <div class="stack" id="repOut"><div class="card"><div class="empty"><div>Techniques found in the report will be summarised here, with every<br>supporting sentence highlighted in context.</div></div></div></div>
+  </div>
+</section>
+
+<!-- ================= BATCH ================= -->
+<section class="view" id="v-batch">
+  <div class="stack">
+    <div class="card">
+      <div class="card-h"><h2>Batch alerts</h2><span class="meta">one alert per line · or load a .txt / .csv (first column)</span></div>
+      <div class="card-b stack">
+        <textarea id="batchText" style="min-height:160px" placeholder="alert 1&#10;alert 2&#10;…"></textarea>
+        <div class="row">
+          <button class="btn primary" id="batchBtn">Map all</button>
+          <button class="btn ghost small" id="batchSample">Load 25 test alerts</button>
+          <label class="btn ghost small" style="cursor:pointer">Upload file<input type="file" id="batchFile" accept=".txt,.csv" hidden></label>
+          <div class="spacer"></div>
+          <button class="btn ghost small" id="navBtn" disabled>⬇ ATT&amp;CK Navigator layer</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>Enterprise matrix coverage</h2><span class="meta" id="mxMeta">parent techniques · darker = more alerts</span></div>
+      <div class="card-b"><div class="matrix" id="matrix"></div></div>
+    </div>
+    <div class="card" id="batchTableCard" hidden>
+      <div class="card-h"><h2>Results</h2></div>
+      <div class="card-b" style="overflow-x:auto"><table class="data" id="batchTable"></table></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= BENCH ================= -->
+<section class="view" id="v-bench">
+  <div class="stack" id="benchOut"><div class="card"><div class="empty">Loading metrics…</div></div></div>
+</section>
+
+<!-- ================= API ================= -->
+<section class="view" id="v-api">
+  <div class="two">
+    <div class="card"><div class="card-h"><h2>Map one alert</h2></div><div class="card-b"><pre class="code">curl -s localhost:8000/api/map \
+  -H 'content-type: application/json' \
+  -d '{"text":"powershell.exe -enc SQBFAFgA...","top_k":5}'</pre></div></div>
+    <div class="card"><div class="card-h"><h2>CTI report</h2></div><div class="card-b"><pre class="code">curl -s localhost:8000/api/report \
+  -H 'content-type: application/json' \
+  -d '{"text":"&lt;full report&gt;","min_score":0.3}'</pre></div></div>
+    <div class="card"><div class="card-h"><h2>Batch → Navigator</h2></div><div class="card-b"><pre class="code">curl -s localhost:8000/api/map/batch \
+  -H 'content-type: application/json' \
+  -d '{"texts":["alert 1","alert 2"]}' \
+  | jq .navigator_layer &gt; layer.json</pre></div></div>
+    <div class="card"><div class="card-h"><h2>Python</h2></div><div class="card-b"><pre class="code">from attackmap.predictor import AttackMapper
+m = AttackMapper()
+r = m.predict("Mimikatz dumped LSASS memory")
+print(r["techniques"][0]["id"])   # T1003</pre></div></div>
+  </div>
+  <p class="meta" style="margin-top:18px">Interactive OpenAPI docs: <a href="/docs">/docs</a></p>
+</section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct = v => (v*100).toFixed(1);
+let TACTICS = [], LAST_LAYER = null, MATRIX = null;
+const PALETTE = ["#ff5a3c","#5aa9ff","#2fd39a","#f5b83d","#b07cff","#ff6fb5","#3dd6e0","#ffa24c","#9bd14b","#e06666","#7aa2ff","#c7a26b"];
+
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify(body)} : {});
+  if(!r.ok){ let m = r.statusText; try{ const j = await r.json(); m = j.detail?.[0]?.msg || j.detail || m }catch(e){} throw new Error(m) }
+  return r.json();
+}
+function busy(btn, on){ btn.disabled = on; if(on){ btn.dataset.html = btn.innerHTML; btn.innerHTML = '<span class="spin"></span> Working…' } else if(btn.dataset.html) btn.innerHTML = btn.dataset.html }
+
+/* ---------- tabs & theme ---------- */
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("active", x === b));
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === "v-" + b.dataset.v));
+  if(b.dataset.v === "bench") loadBench();
+  if(b.dataset.v === "batch" && !MATRIX) loadMatrix();
+  try{ localStorage.setItem("tab", b.dataset.v) }catch(e){}
+});
+$("#theme").onclick = () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+  document.documentElement.dataset.theme = cur === "light" ? "dark" : "light";
+  try{ localStorage.setItem("theme", document.documentElement.dataset.theme) }catch(e){}
+};
+try{ const t = localStorage.getItem("theme"); if(t) document.documentElement.dataset.theme = t }catch(e){}
+
+/* ---------- presets ---------- */
+const PRESETS = {
+  "Encoded PowerShell": "Alert: Suspicious Encoded PowerShell Command Line. Host WS-0142 user CORP\\jdoe. Image: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe CommandLine: powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA ParentImage: C:\\Program Files\\Microsoft Office\\WINWORD.EXE",
+  "LSASS dump": "EDR detection: process rundll32.exe opened a handle to lsass.exe with PROCESS_VM_READ access and called MiniDump via comsvcs.dll, writing C:\\Windows\\Temp\\lsass.dmp. Possible credential theft.",
+  "Phishing": "The actor sent spearphishing emails with a malicious Excel attachment (invoice_2024.xlsm) to finance staff; enabling macros dropped the first-stage loader from hxxp://cdn-update.example/a.bin.",
+  "Run key": "Sysmon EventID 13: registry value set HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\OneDriveUpdate = C:\\Users\\Public\\odu.exe by process odu.exe",
+  "Ransomware": "Multiple hosts executed vssadmin.exe delete shadows /all /quiet followed by mass file renames to *.lockbit and a ransom note README.txt dropped on every share.",
+  "DNS tunneling": "Firewall alert: host 10.20.3.44 issued 18,000 DNS TXT queries in 10 minutes to random subdomains of x7k2.example-cdn.net, consistent with DNS tunnelling for command and control.",
+  "Scheduled task": "Alert: schtasks.exe /create /sc minute /mo 15 /tn \"MicrosoftEdgeUpdateTaskCore\" /tr \"C:\\ProgramData\\edge\\update.exe\" /ru SYSTEM executed by cmd.exe",
+};
+const pr = $("#presets");
+Object.entries(PRESETS).forEach(([k,v]) => { const b = document.createElement("button"); b.textContent = k; b.onclick = () => { $("#alertText").value = v; mapAlert() }; pr.appendChild(b) });
+const rb = document.createElement("button"); rb.textContent = "↻ random test-set sample"; rb.onclick = async () => { const [e] = await api("/api/examples?n=1"); $("#alertText").value = e.text; $("#alertText").dataset.gold = e.labels.join(","); mapAlert() }; pr.appendChild(rb);
+$("#alertText").addEventListener("input", () => delete $("#alertText").dataset.gold);
+
+/* ---------- rendering helpers ---------- */
+function ring(score, conf){
+  const r = 50, c = 2*Math.PI*r, col = conf === "high" ? "var(--ok)" : conf === "medium" ? "var(--warn)" : "var(--low)";
+  return `<div class="ring"><svg width="118" height="118" viewBox="0 0 118 118"><circle cx="59" cy="59" r="${r}" stroke="var(--panel2)" stroke-width="10" fill="none"/>
+  <circle cx="59" cy="59" r="${r}" stroke="${col}" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-Math.min(score,1))}" style="transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1)"/></svg>
+  <div class="v"><div><b>${Math.round(score*100)}</b><span>score</span></div></div></div>`;
+}
+const tacName = s => (TACTICS.find(t => t.shortname === s) || {name:s}).name;
+const pills = ts => ts.map(t => `<span class="pill">${esc(tacName(t))}</span>`).join("");
+function chain(profile){
+  const m = Object.fromEntries(profile.map(p => [p.shortname, p.score]));
+  const max = Math.max(...profile.map(p => p.score), 1e-6);
+  return `<div class="chain">${TACTICS.map(t => { const v = (m[t.shortname]||0)/max;
+    const bg = v > .05 ? `background:color-mix(in srgb, #ff5a3c ${Math.round(18+v*82)}%, var(--heat0))` : "";
+    return `<div class="${v>.05?"on":""}" style="${bg}" title="${esc(t.name)}: ${pct(m[t.shortname]||0)}%"><i>${v>.05?Math.round((m[t.shortname]||0)*100):""}</i>${esc(t.name)}</div>` }).join("")}</div>`;
+}
+function attentionHTML(att){
+  const max = Math.max(...att.map(a => a[1]), 1e-6);
+  return att.map(([tok, a]) => { const v = a/max; return v > .15 ? `<mark style="--a:${(v*.75).toFixed(2)}">${esc(tok)}</mark>` : esc(tok) }).join(" ");
+}
+
+/* ---------- alert ---------- */
+async function mapAlert(){
+  const text = $("#alertText").value.trim(); if(text.length < 3) return;
+  const btn = $("#mapBtn"); busy(btn, true);
+  try{
+    const r = await api("/api/map", {text, top_k:+$("#topk").value, explain:true});
+    renderAlert(r);
+  }catch(e){ $("#alertOut").innerHTML = `<div class="card card-b err">⚠ ${esc(e.message)}</div>` }
+  finally{ busy(btn, false) }
+}
+function renderAlert(r){
+  const t = r.techniques[0], gold = ($("#alertText").dataset.gold || "").split(",").filter(Boolean);
+  $("#lat").textContent = `${r.latency_ms} ms`;
+  const goldHTML = gold.length ? `<div class="meta" style="margin-top:8px">Ground truth: ${gold.map(g => `<b class="mono" style="color:${r.techniques.some(x=>x.id===g)?"var(--ok)":"var(--accent)"}">${g}</b>`).join(", ")}</div>` : "";
+  const subs = t.subtechniques ? `<p class="label" style="margin-top:12px">Likely sub-techniques</p><div class="subs">${t.subtechniques.map(s => `<div class="sub"><b>${s.id}</b>${esc(s.name)}</div>`).join("")}</div>` : "";
+  const rows = r.techniques.map(x => `<tr class="${x.selected?"sel":""}"><td class="n">${x.rank}</td>
+    <td><span class="tid">${x.id}</span></td>
+    <td class="nm"><a href="${x.url}" target="_blank" rel="noopener" style="color:inherit">${esc(x.name)}</a><small>${x.tactics.map(tacName).map(esc).join(" · ")}</small>
+      <div class="pm">${Object.entries(x.per_model).map(([k,v]) => `<span>${k} <b>${(v*100).toFixed(0)}</b></span>`).join("")}</div></td>
+    <td style="width:28%"><div class="bar"><span style="width:${Math.max(2, x.score/r.techniques[0].score*100)}%"></span></div></td>
+    <td class="mono" style="text-align:right;width:56px">${pct(x.score)}</td></tr>`).join("");
+  const ev = r.evidence || {};
+  $("#alertOut").innerHTML = `
+  <div class="card"><div class="card-b hero">${ring(t.score, t.confidence)}
+    <div><div class="row"><span class="tid">${t.id}</span><span class="conf ${t.confidence}">${t.confidence} confidence</span></div>
+    <div class="tname">${esc(t.name)}</div>${pills(t.tactics)}${subs}${goldHTML}
+    <div class="meta" style="margin-top:10px"><a href="${t.url}" target="_blank" rel="noopener">attack.mitre.org/${t.id} ↗</a></div></div></div></div>
+  <div class="card"><div class="card-h"><h2>Kill-chain profile</h2><span class="meta">probability mass per tactic</span></div><div class="card-b">${chain(r.tactics)}</div></div>
+  <div class="card"><div class="card-h"><h2>Ranked techniques</h2><span class="meta">selected = above calibrated threshold</span></div><div class="card-b" style="padding-top:6px"><table class="rank">${rows}</table></div></div>
+  ${(ev.attention || ev.terms) ? `<div class="card"><div class="card-h"><h2>Why? Evidence for ${t.id}</h2></div><div class="card-b stack">
+    ${ev.terms?.length ? `<div><p class="label">Decisive terms (TF-IDF weights)</p><div class="terms">${ev.terms.map(([w,v]) => `<span class="term" title="${v.toFixed(3)}">${esc(w)}</span>`).join("")}</div></div>` : ""}
+    ${ev.attention ? `<div><p class="label">BiLSTM attention over the normalised text</p><div class="ev">${attentionHTML(ev.attention)}</div></div>` : ""}
+  </div></div>` : ""}`;
+  const io = Object.entries(r.iocs || {});
+  $("#iocCard").hidden = !io.length;
+  $("#iocs").innerHTML = io.map(([k,v]) => `<dt>${esc(k)}</dt><dd>${v.map(esc).join("<br>")}</dd>`).join("");
+  $("#ltCard").hidden = !r.long_tail?.length;
+  $("#longtail").innerHTML = (r.long_tail||[]).map(x => `<div class="techitem"><span class="tid">${x.id}</span><div><b>${esc(x.name)}</b><div class="meta">${x.tactics.map(tacName).map(esc).join(" · ")}</div></div><span class="count" style="font-size:13px">${x.similarity.toFixed(2)}</span></div>`).join("");
+}
+$("#mapBtn").onclick = mapAlert;
+$("#alertText").addEventListener("keydown", e => { if((e.ctrlKey||e.metaKey) && e.key === "Enter") mapAlert() });
+
+/* ---------- report ---------- */
+const SAMPLE_REPORT = `In March, the threat actor gained initial access by sending spearphishing emails containing malicious Word documents to employees of a regional energy company. When the victim enabled macros, the document executed a PowerShell script that downloaded a second-stage payload from a compromised WordPress site.
+The loader established persistence by creating a scheduled task named "GoogleUpdateTaskMachineCore" that runs every 30 minutes. It also added a Run registry key as a fallback mechanism.
+Once on the host, the operators used Mimikatz to dump credentials from LSASS memory and harvested saved browser passwords. They then ran net group "domain admins" /domain and nltest /dclist to enumerate the Active Directory environment.
+Using the stolen credentials, the attackers moved laterally over SMB with PsExec and RDP to reach file servers. Sensitive documents were compressed into password-protected RAR archives before being staged in a temporary directory.
+The archives were exfiltrated over HTTPS to an attacker-controlled cloud storage account. Command and control traffic used HTTPS with a domain-fronting technique to blend in with legitimate traffic.
+Finally, the group deployed ransomware that encrypted files on network shares and deleted volume shadow copies using vssadmin to inhibit recovery.`;
+$("#repSample").onclick = () => $("#reportText").value = SAMPLE_REPORT;
+$("#repBtn").onclick = async () => {
+  const text = $("#reportText").value.trim(); if(text.length < 20) return;
+  const btn = $("#repBtn"); busy(btn, true);
+  try{ renderReport(await api("/api/report", {text, min_score:+$("#repMin").value})) }
+  catch(e){ $("#repOut").innerHTML = `<div class="card card-b err">⚠ ${esc(e.message)}</div>` }
+  finally{ busy(btn, false) }
+};
+function renderReport(r){
+  const color = {}; r.techniques.forEach((t,i) => color[t.id] = PALETTE[i % PALETTE.length]);
+  const min = +$("#repMin").value;
+  LAST_LAYER = r.navigator_layer;
+  $("#repOut").innerHTML = `
+  <div class="kpis"><div class="card kpi"><b>${r.n_sentences}</b><span>sentences</span></div><div class="card kpi"><b>${r.n_mapped}</b><span>mapped</span></div>
+  <div class="card kpi"><b>${r.techniques.length}</b><span>techniques</span></div><div class="card kpi"><b>${new Set(r.techniques.flatMap(t=>t.tactics)).size}</b><span>tactics</span></div></div>
+  <div class="card"><div class="card-h"><h2>Techniques identified</h2><div class="spacer"></div><button class="btn ghost small" onclick="downloadLayer('cti-report')">⬇ Navigator layer</button></div><div class="card-b techlist">
+  ${r.techniques.map(t => `<div class="techitem" style="--c:${color[t.id]}"><span class="sw"></span><span class="tid">${t.id}</span><div><b>${esc(t.name)}</b><div class="meta">${t.tactics.map(tacName).map(esc).join(" · ")} · max ${pct(t.max_score)}%</div></div><span class="count">${t.sentences.length}</span></div>`).join("") || '<div class="meta">Nothing above the confidence threshold.</div>'}
+  </div></div>
+  <div class="card"><div class="card-h"><h2>Annotated report</h2></div><div class="card-b rep">
+  ${r.sentences.map(s => s.top.score >= min ? `<span class="s hit" style="--c:${color[s.top.id]}" title="${s.top.id} ${esc(s.top.name)} — ${pct(s.top.score)}%">${esc(s.text)}<span class="tag">${s.top.id}</span></span> ` : `<span class="s">${esc(s.text)}</span> `).join("")}
+  </div></div>`;
+}
+
+/* ---------- batch & matrix ---------- */
+async function loadMatrix(){ MATRIX = await api("/api/matrix"); drawMatrix({}) }
+function drawMatrix(counts){
+  const max = Math.max(1, ...Object.values(counts));
+  $("#matrix").innerHTML = MATRIX.map(col => `<div class="mcol"><h4>${esc(col.name)}</h4>${col.techniques.map(t => {
+    const c = counts[t.id] || 0, lvl = c ? Math.min(4, 1 + Math.floor(3*c/max)) : 0;
+    return `<div class="mcell ${t.modelled?"m":""} ${lvl?"h"+lvl:""}" title="${t.id} ${esc(t.name)}${c?` — ${c} alert(s)`:""}${t.modelled?"":" (not in trained label space)"}"><b>${t.id}${c?` · ${c}`:""}</b>${esc(t.name)}</div>` }).join("")}</div>`).join("");
+}
+$("#batchSample").onclick = async () => { const ex = await api("/api/examples?n=25&source=sigma_siem"); $("#batchText").value = ex.map(e => e.text).join("\n") };
+$("#batchFile").onchange = async e => { const f = e.target.files[0]; if(!f) return; const txt = await f.text();
+  $("#batchText").value = f.name.endsWith(".csv") ? txt.split(/\r?\n/).slice(1).map(l => l.split(",")[0].replace(/^"|"$/g,"")).filter(Boolean).join("\n") : txt };
+$("#batchBtn").onclick = async () => {
+  const texts = $("#batchText").value.split("\n").map(s => s.trim()).filter(Boolean); if(!texts.length) return;
+  const btn = $("#batchBtn"); busy(btn, true);
+  try{
+    if(!MATRIX) await loadMatrix();
+    const r = await api("/api/map/batch", {texts: texts.slice(0,500), top_k:3});
+    LAST_LAYER = r.navigator_layer; $("#navBtn").disabled = false;
+    const counts = {}; r.results.forEach(x => x.techniques.filter(t => t.selected).forEach(t => counts[t.id] = (counts[t.id]||0) + 1));
+    drawMatrix(counts);
+    $("#mxMeta").textContent = `${r.results.length} alerts · ${Object.keys(counts).length} techniques hit`;
+    $("#batchTableCard").hidden = false;
+    $("#batchTable").innerHTML = `<tr><th>#</th><th>Alert</th><th>Top technique</th><th>Tactic</th><th class="num">Score</th></tr>` +
+      r.results.map((x,i) => { const t = x.techniques[0]; return `<tr><td class="mono">${i+1}</td><td style="max-width:560px">${esc(x.text.slice(0,180))}${x.text.length>180?"…":""}</td>
+      <td><span class="tid">${t.id}</span> ${esc(t.name)}</td><td>${t.tactics.map(tacName).map(esc).join(", ")}</td><td class="num"><span class="conf ${t.confidence}">${pct(t.score)}</span></td></tr>` }).join("");
+  }catch(e){ alert(e.message) } finally{ busy(btn, false) }
+};
+function downloadLayer(name){
+  if(!LAST_LAYER) return;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(LAST_LAYER, null, 2)], {type:"application/json"}));
+  a.download = `${name}-navigator-layer.json`; a.click();
+}
+$("#navBtn").onclick = () => downloadLayer("batch");
+
+/* ---------- benchmarks ---------- */
+let benchLoaded = false;
+async function loadBench(){
+  if(benchLoaded) return;
+  try{
+    const m = await api("/api/metrics"); benchLoaded = true;
+    const NAMES = {tfidf:"TF-IDF + LogReg", bilstm:"BiLSTM + attention", sbert_zeroshot:"Sentence-Transformer (zero-shot)", sbert:"Sentence-Transformer (fine-tuned)", roberta:"RoBERTa (distilroberta-base)", bert:"BERT (bert-base-uncased)", ensemble:"Ensemble"};
+    const cols = ["P@1","Hit@3","Hit@5","MRR","micro_F1","macro_F1","Tactic@1"];
+    const names = Object.keys(m);
+    const best = Object.fromEntries(cols.map(c => [c, Math.max(...names.map(n => m[n].test[c]))]));
+    const e = m.ensemble?.test || m[names[0]].test;
+    const chart = (() => {
+      const W = 760, rowH = 34, H = names.length*rowH + 30, x0 = 250, w = W - x0 - 60;
+      const metrics = [["P@1","#ff5a3c"],["Hit@5","#ff9b3d"],["MRR","#5aa9ff"]];
+      let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Model comparison">`;
+      [0,.25,.5,.75,1].forEach(v => s += `<line x1="${x0+v*w}" x2="${x0+v*w}" y1="0" y2="${H-22}" stroke="var(--line)"/><text x="${x0+v*w}" y="${H-6}" fill="var(--faint)" font-size="11" text-anchor="middle">${v*100}%</text>`);
+      names.forEach((n,i) => { const y = i*rowH + 4;
+        s += `<text x="${x0-10}" y="${y+18}" fill="var(--text)" font-size="12.5" font-weight="${n==="ensemble"?800:500}" text-anchor="end">${NAMES[n]||n}</text>`;
+        metrics.forEach(([k,c],j) => s += `<rect x="${x0}" y="${y+j*9}" height="7" rx="3.5" width="${m[n].test[k]*w}" fill="${c}"><title>${k}: ${pct(m[n].test[k])}%</title></rect>`);
+        const top = Math.max(...metrics.map(([k]) => m[n].test[k]));
+        s += `<text x="${x0+top*w+6}" y="${y+16}" fill="var(--muted)" font-size="11" font-family="JetBrains Mono, monospace">${pct(m[n].test["P@1"])}</text>`;
+      });
+      return s + `</svg><div class="row meta" style="margin-top:6px">${metrics.map(([k,c]) => `<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${c};margin-right:5px"></span>${k}</span>`).join("")}</div>`;
+    })();
+    const srcNames = {attack_procedure:"ATT&CK procedures (CTI)", tram_cti:"TRAM CTI reports", sigma_siem:"Sigma SIEM alerts"};
+    const srcs = Object.keys(m.ensemble?.test_by_source || {});
+    $("#benchOut").innerHTML = `
+    <div class="kpis"><div class="card kpi"><b>${pct(e["P@1"])}%</b><span>Ensemble P@1 (test)</span></div><div class="card kpi"><b>${pct(e["Hit@5"])}%</b><span>Hit@5 — gold in top-5</span></div>
+    <div class="card kpi"><b>${pct(e["Tactic@1"])}%</b><span>Tactic accuracy</span></div><div class="card kpi"><b>${pct(e.MRR)}%</b><span>Mean reciprocal rank</span></div></div>
+    <div class="card"><div class="card-h"><h2>Held-out test set — all models</h2></div><div class="card-b" style="overflow-x:auto"><table class="data">
+    <tr><th>Model</th>${cols.map(c => `<th class="num">${c}</th>`).join("")}<th class="num">ms / text</th></tr>
+    ${names.map(n => `<tr class="${n==="ensemble"?"ens":""}"><td>${NAMES[n]||n}</td>${cols.map(c => `<td class="num ${Math.abs(m[n].test[c]-best[c])<1e-9?"best":""}">${pct(m[n].test[c])}</td>`).join("")}<td class="num">${m[n].infer_ms_per_text ?? "—"}</td></tr>`).join("")}
+    </table></div></div>
+    <div class="two"><div class="card"><div class="card-h"><h2>Comparison</h2></div><div class="card-b">${chart}</div></div>
+    <div class="card"><div class="card-h"><h2>Ensemble by data source</h2></div><div class="card-b"><table class="data"><tr><th>Source</th><th class="num">P@1</th><th class="num">Hit@5</th><th class="num">Tactic@1</th></tr>
+    ${srcs.map(s => { const v = m.ensemble.test_by_source[s]; return `<tr><td>${srcNames[s]||s}</td><td class="num">${pct(v["P@1"])}</td><td class="num">${pct(v["Hit@5"])}</td><td class="num">${pct(v["Tactic@1"])}</td></tr>` }).join("")}
+    </table><p class="meta" style="margin-top:14px">Figures: <code>reports/figures/</code> · full numbers: <code>reports/results.json</code></p></div></div></div>`;
+  }catch(e){ $("#benchOut").innerHTML = `<div class="card card-b err">⚠ ${esc(e.message)}</div>` }
+}
+
+/* ---------- boot ---------- */
+(async () => {
+  try{
+    const h = await api("/api/health");
+    const mx = await api("/api/matrix"); MATRIX = mx; TACTICS = mx.map(c => ({shortname:c.shortname, name:c.name}));
+    $("#status").innerHTML = `<span class="dot"></span>${Object.keys(h.models).length} models · ${h.labels} techniques · ATT&CK ${h.attack_techniques} entries`;
+    $("#status").title = Object.entries(h.models).map(([k,v]) => `${k}: weight ${v}`).join("\n");
+    drawMatrix({});
+  }catch(e){ $("#status").innerHTML = `<span class="dot" style="background:var(--accent)"></span>API offline` }
+  try{ const t = localStorage.getItem("tab"); if(t) document.querySelector(`#tabs button[data-v="${t}"]`)?.click() }catch(e){}
+})();
+</script>
+</body>
+</html>
