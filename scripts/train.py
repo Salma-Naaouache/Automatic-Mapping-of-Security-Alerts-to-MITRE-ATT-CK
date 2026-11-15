@@ -22,6 +22,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("model", choices=registry.MODEL_NAMES)
 ap.add_argument("--epochs", type=int)
 ap.add_argument("--limit", type=int, help="subsample train set (smoke tests)")
+ap.add_argument("--resume", action="store_true", help="continue training a saved transformer for --epochs more")
 args = ap.parse_args()
 
 rows, labels, kb = load_corpus(), load_labels(), KnowledgeBase.load()
@@ -32,10 +33,18 @@ X = {s: [r["text"] for r in v] for s, v in part.items()}
 Y = {s: multi_hot([r["labels"] for r in v], labels) for s, v in part.items()}
 
 kw = {"epochs": args.epochs} if args.epochs else {}
-model = registry.build(args.model, labels, **kw)
+prev_seconds = 0.0
+if args.resume:
+    if args.model not in ("bert", "roberta"):
+        sys.exit("--resume is supported for bert / roberta")
+    model = registry.load(args.model)
+    model.epochs = args.epochs or 2
+    prev_seconds = json.loads((ARTIFACTS_DIR / args.model / "metrics.json").read_text())["train_seconds"]
+else:
+    model = registry.build(args.model, labels, **kw)
 t0 = time.time()
 model.fit(X["train"], Y["train"], val=(X["val"], Y["val"]))
-train_s = time.time() - t0
+train_s = time.time() - t0 + prev_seconds
 
 out_dir = ARTIFACTS_DIR / args.model
 out_dir.mkdir(parents=True, exist_ok=True)

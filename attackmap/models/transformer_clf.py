@@ -85,8 +85,11 @@ class TransformerMapper(Mapper):
         steps = math.ceil(len(texts) / self.batch_size) * self.epochs
         sched = get_linear_schedule_with_warmup(opt, int(0.06 * steps), steps)
         loss_fn = nn.BCEWithLogitsLoss()
-        best, best_state = -1.0, None
-        for ep in range(self.epochs):
+        best = max((h.get("MRR", -1.0) for h in self.history), default=-1.0)  # resume-aware
+        offset = len(self.history)
+        # When resuming, the checkpoint we started from is the incumbent best.
+        best_state = {k: v.detach().clone() for k, v in self.model.state_dict().items()} if offset else None
+        for ep in range(offset, offset + self.epochs):
             self.model.train()
             t0, tot, n = time.time(), 0.0, 0
             for step, (_, ids, mask, yb) in enumerate(self._batches(texts, y, shuffle=True)):
