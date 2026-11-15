@@ -31,7 +31,9 @@ class AttackMapper:
         self.kb = KnowledgeBase.load()
         cfg = json.loads((self.root / "ensemble.json").read_text()) if (self.root / "ensemble.json").exists() else {}
         weights = cfg.get("weights", {})
-        names = models or list(weights) or [m for m in registry.MODEL_NAMES if (self.root / m).exists()]
+        # Default: only models the ensemble actually uses (zero-weight models are not loaded).
+        names = models or [n for n, w in weights.items() if w > 0] or \
+            [m for m in registry.MODEL_NAMES if (self.root / m).exists()]
         self.models = {n: registry.load(n, self.root) for n in names if (self.root / n / "meta.json").exists()}
         if not self.models:
             raise FileNotFoundError(f"no trained models found under {self.root}")

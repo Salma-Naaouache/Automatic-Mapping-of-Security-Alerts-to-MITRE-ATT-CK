@@ -10,7 +10,11 @@
 **sub-techniques**, the **evidence** behind the decision and the **IOCs** in the text. Results can be
 exported as an **ATT&CK Navigator layer**. It ships as a Python library, a REST API and a web console.
 
-<p align="center"><img src="reports/figures/model_comparison.png" width="760"></p>
+<p align="center"><img src="reports/screenshots/alert-dark.png" width="900"></p>
+
+| CTI report mode | Batch alerts → ATT&CK matrix | Benchmarks |
+|---|---|---|
+| <img src="reports/screenshots/report-dark.png"> | <img src="reports/screenshots/batch-dark.png"> | <img src="reports/screenshots/bench-dark.png"> |
 
 ---
 
@@ -33,6 +37,28 @@ Held-out **test set** (2,731 texts, 135 techniques, never used for training, mod
 threshold tuning). Full numbers in [`reports/results.json`](reports/results.json).
 
 <!-- RESULTS_TABLE -->
+| Model | P@1 | Hit@3 | Hit@5 | MRR | micro_F1 | macro_F1 | Tactic@1 | train | ms/text |
+|---|---|---|---|---|---|---|---|---|---|
+| TF-IDF + LogReg (baseline) | 0.795 | 0.919 | 0.951 | 0.864 | 0.772 | 0.672 | 0.866 | 2 min | 0.32 |
+| BiLSTM + attention | 0.763 | 0.878 | 0.909 | 0.830 | 0.735 | 0.589 | 0.845 | 9 min | 0.43 |
+| Sentence-Transformer, zero-shot | 0.286 | 0.505 | 0.605 | 0.433 | 0.294 | 0.247 | 0.523 | 0 min | 14.39 |
+| Sentence-Transformer, fine-tuned | 0.802 | 0.922 | 0.947 | 0.867 | 0.778 | 0.698 | 0.876 | 32 min | 3.58 |
+| RoBERTa (distilroberta-base) | 0.789 | 0.908 | 0.940 | 0.856 | 0.764 | 0.648 | 0.869 | 78 min | 7.55 |
+| BERT (bert-base-uncased) | 0.761 | 0.881 | 0.914 | 0.829 | 0.737 | 0.541 | 0.854 | 164 min | 15.21 |
+| **Ensemble** | **0.828** | **0.945** | **0.968** | **0.890** | **0.803** | **0.724** | **0.889** | — | — |
+
+Ensemble weights (searched on validation): tfidf 0.4, bilstm 0.1, sbert 0.3, roberta 0.2.
+<!-- /RESULTS_TABLE -->
+
+<p align="center"><img src="reports/figures/model_comparison.png" width="760"></p>
+
+**Findings**
+* **The ensemble wins on every metric**: +3.3 P@1 points over the best single model, with the correct technique in the top-5 for 96.8% of texts and the right tactic 88.9% of the time.
+* **A contrastively fine-tuned Sentence-Transformer is the best single model** (P@1 0.802, best macro-F1 among single models). It is also 2–4× faster than the fine-tuned transformers.
+* **TF-IDF is a very strong baseline** in this domain: tool names, binaries and command-line flags are highly discriminative. The neural models add the most on paraphrased CTI prose.
+* **The models complement each other.** The validation search keeps four models: TF-IDF, BiLSTM, fine-tuned SBERT and RoBERTa. BERT and zero-shot SBERT get weight 0 once the others are present.
+* **SIEM alerts are the hardest input** (70% P@1 vs 82–90% for CTI prose). Sigma rules are short, terse and often legitimately map to several techniques.
+* **On CPU, BERT converges more slowly than distilRoBERTa** (val P@1 0.57 vs 0.76 after 3 epochs) and needed 6 epochs to catch up.
 
 **Metrics.** An analyst reads a ranked list, so ranking metrics lead.
 **P@1**: the top technique is correct. **Hit@k**: a correct technique is in the top-k.
@@ -41,6 +67,8 @@ threshold tuning). Full numbers in [`reports/results.json`](reports/results.json
 validation). **Tactic@1**: the top technique shares a tactic with the gold labels.
 
 <!-- CHALLENGE -->
+**Out-of-distribution check.** 30 hand-written SOC alerts in formats never seen in training (EDR, firewall, Zeek, AWS GuardDuty, Azure AD; `data/challenge/`): **P@1 60% · Hit@3 80% · Hit@5 87% · Tactic@1 67%**. Per-alert results are in `reports/challenge.json`.
+<!-- /CHALLENGE -->
 
 | | |
 |---|---|
@@ -86,12 +114,12 @@ All models implement one interface (`attackmap/models/base.py`):
 | Model | File | Details |
 |---|---|---|
 | **TF-IDF + LogReg** | `models/tfidf.py` | word 1–2-grams + char 3–5-grams (300k features), one-vs-rest logistic regression with class balancing. Strong baseline; its linear weights also provide **faithful term-level explanations**. |
-| **BiLSTM + attention** | `models/bilstm.py` | trained from scratch: embedding 200 → 2-layer BiLSTM (2×192, packed sequences) → [additive-attention pool ; max pool] → linear. The attention weights drive the **token highlighting** in the UI. |
+| **BiLSTM + attention** | `models/bilstm.py` | trained from scratch: embedding 200 → 2-layer BiLSTM (2×192, packed sequences) → [additive-attention pool ; max pool] → linear, trained with soft-target softmax cross-entropy (per-label BCE stalled at the label prior from scratch). The attention weights drive the **token highlighting** in the UI. |
 | **Sentence-Transformer, zero-shot** | `models/sbert.py` | `all-MiniLM-L6-v2` embeds the text and every technique's name and description, then ranks by cosine. **Uses no labelled data** and covers all 691 techniques and sub-techniques. |
-| **Sentence-Transformer, fine-tuned** | `models/sbert.py` | contrastive fine-tuning (`MultipleNegativesRankingLoss`, no-duplicate batches) of alert ↔ technique description. Scores = ½ cosine to class prototypes (description + centroid) + ½ similarity-weighted k-NN vote. |
-| **RoBERTa** | `models/transformer_clf.py` | `distilroberta-base` fine-tuned end-to-end, multi-label BCE, length-bucketed dynamic padding, linear warm-up and decay, 20× LR on the new head, best epoch kept by validation MRR. |
-| **BERT** | `models/transformer_clf.py` | `bert-base-uncased`, same recipe. |
-| **Ensemble** | `models/ensemble.py` | Row-normalised scores, weighted average. Weights come from an exhaustive simplex grid search on **validation** MRR, and the decision threshold is tuned on validation micro-F1. |
+| **Sentence-Transformer, fine-tuned** | `models/sbert.py` | contrastive fine-tuning (`MultipleNegativesRankingLoss`, no-duplicate batches, 128-token cap) of alert ↔ technique description. Scores = ½ cosine to class prototypes (description + centroid) + ½ similarity-weighted k-NN vote. |
+| **RoBERTa** | `models/transformer_clf.py` | `distilroberta-base` fine-tuned end-to-end, multi-label BCE, length-bucketed dynamic padding, linear warm-up and decay, 20× LR on the new head, best epoch kept by validation MRR. 5 epochs (3 + 2 resumed). |
+| **BERT** | `models/transformer_clf.py` | `bert-base-uncased`, same recipe, 6 epochs (3 + 3 resumed): it converges more slowly than RoBERTa here. |
+| **Ensemble** | `models/ensemble.py` | Row-normalised scores, weighted average. Weights come from an exhaustive simplex grid search on **validation** MRR, and the decision threshold is tuned on validation micro-F1. Zero-weight models are not loaded at serving time. |
 
 All training ran on a **4-core CPU** (no GPU). Wall-clock times are in `reports/results.json`.
 
@@ -126,8 +154,8 @@ python scripts/train.py tfidf        # 2. train each model family (CPU: minutes 
 python scripts/train.py bilstm
 python scripts/train.py sbert_zeroshot
 python scripts/train.py sbert
-python scripts/train.py roberta --epochs 3
-python scripts/train.py bert --epochs 3
+python scripts/train.py roberta --epochs 3 && python scripts/train.py roberta --resume --epochs 2
+python scripts/train.py bert --epochs 3    && python scripts/train.py bert --resume --epochs 3
 python scripts/ensemble.py           # 3. tune ensemble weights on val, write reports/results.json
 python scripts/make_figures.py       # 4. figures -> reports/figures/
 python scripts/challenge.py          # 5. out-of-distribution SOC-alert check
@@ -147,7 +175,7 @@ r = m.predict("rundll32.exe comsvcs.dll MiniDump of lsass.exe written to C:\\Win
 r["techniques"][0]["id"], r["techniques"][0]["subtechniques"][0]["id"]   # ('T1003', 'T1003.001')
 ```
 
-Trained weights (`artifacts/`, about 1 GB) are not committed. Run steps 2–3 to regenerate them.
+Trained weights (`artifacts/`, about 1.1 GB) are not committed. Run steps 2–3 to regenerate them.
 
 ## 6. API
 
@@ -171,6 +199,8 @@ pytest                   # everything, incl. tiny BERT / Sentence-Transformer tr
 ```
 
 <!-- TESTS -->
+Latest run: `pytest: 50 passed · browser e2e (tests/e2e/ui_test.js): 23/23 checks passed, no JS errors`
+<!-- /TESTS -->
 
 The tests cover every stage. Each stage was also run end-to-end on the real data while building the
 project.
@@ -185,10 +215,16 @@ project.
 | Models | `tests/test_models.py`: every family fits a toy task, beats chance and **reproduces predictions exactly after save/load**; ensemble weight search |
 | API & predictor | `tests/test_api.py`: every endpoint, validation errors, Navigator layer format, report mode, sentence splitting |
 
-Bugs the tests caught during development:
+Bugs the tests caught during development (each fixed and covered by a regression test):
 - `clean()` was not idempotent: its HTML stripper ate the `<IP>` placeholders.
 - BiLSTM predictions depended on batch padding, because sequences were not packed.
 - Sentence-Transformer probabilities could round to just above 1.
+
+The browser end-to-end test caught a CSS class collision (`.bar`) that collapsed the header and hid the score bars.
+
+Training runs also surfaced two issues:
+- The BiLSTM stalled with per-label BCE; it was switched to soft-target cross-entropy.
+- Sentence-Transformer fine-tuning ran out of memory; the sequence length was capped at 128 tokens.
 
 ## 8. Project layout
 
@@ -213,6 +249,8 @@ tests/                 pytest suite
 
 * **Parent-level classification.** The classifiers predict 135 parent techniques. Sub-techniques
   are proposed by semantic similarity, which is helpful but not supervised.
+* **Sub-technique choice is similarity-based** and can be wrong, e.g. a Mimikatz `sekurlsa` alert on a
+  domain controller can surface `T1003.006 DCSync` ahead of `T1003.001 LSASS Memory`.
 * **Long tail.** Techniques with fewer than 25 examples are only reachable zero-shot. More data
   (e.g. vendor alert exports) or few-shot prototypes would help.
 * **ATT&CK version drift.** The pipeline drops labels whose ATT&CK ID has been revoked. In this
@@ -220,5 +258,5 @@ tests/                 pytest suite
   relationships is a simple next step.
 * **Sigma alerts are rendered from rules, not real firing events.** Real SIEM exports with host
   context would be a closer match to production traffic.
-* **CPU budget.** The transformers were trained for 3 epochs on CPU. More epochs, `bert-large` or a
+* **CPU budget.** The transformers were trained for 5–6 epochs on a 4-core CPU. More epochs, `bert-large` or a
   security-domain encoder such as SecBERT would likely add a few points.

