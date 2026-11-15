@@ -113,13 +113,16 @@ class SBertMapper(Mapper):
             p = 0.5 * p + 0.5 * knn
         return np.clip(p, 0.0, 1.0).astype(np.float32)
 
-    def retrieve(self, text: str, candidates: list[str], top: int = 5) -> list[tuple[str, float]]:
-        """Rank arbitrary ATT&CK ids (e.g. sub-techniques, long-tail techniques) for ``text``."""
+    def retrieve(self, text: str | np.ndarray, candidates: list[str], top: int = 5) -> list[tuple[str, float]]:
+        """Rank arbitrary ATT&CK ids (e.g. sub-techniques, long-tail techniques) for ``text``.
+
+        ``text`` may be a pre-computed query embedding to avoid re-encoding."""
         cache = self.__dict__.setdefault("_doc_cache", {})
         missing = [c for c in candidates if c not in cache]
         if missing:
             cache.update(zip(missing, self.encode([self.label_doc(c) for c in missing])))
-        sims = self.encode([text])[0] @ np.stack([cache[c] for c in candidates]).T
+        q = self.encode([text])[0] if isinstance(text, str) else text
+        sims = q @ np.stack([cache[c] for c in candidates]).T
         order = np.argsort(-sims)[:top]
         return [(candidates[i], float(sims[i])) for i in order]
 

@@ -119,16 +119,17 @@ class AttackMapper:
             ev["attention"] = [(tok, round(a, 4)) for tok, a in att]
         r["evidence"] = ev
         if self.retriever is not None:
+            q = self.retriever.encode([cleaned])[0]  # one encoding reused for every retrieval
             for t in r["techniques"][:3]:
                 kids = self._children.get(t["id"], [])
                 if kids:
                     t["subtechniques"] = [
                         {"id": k, "name": self.kb.name_of(k), "similarity": round(s, 3)}
-                        for k, s in self.retriever.retrieve(cleaned, kids, top=3)
+                        for k, s in self.retriever.retrieve(q, kids, top=3)
                     ]
             r["long_tail"] = [
                 {"id": k, "name": self.kb.name_of(k), "tactics": self.kb.tactics_of(k), "similarity": round(s, 3)}
-                for k, s in self.retriever.retrieve(cleaned, self._long_tail, top=3)
+                for k, s in self.retriever.retrieve(q, self._long_tail, top=3)
             ]
 
     # ------------------------------------------------------------ navigator
