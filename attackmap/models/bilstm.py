@@ -55,6 +55,8 @@ class _Net(nn.Module):
 
 
 class BiLSTMMapper(Mapper):
+    """``predict_proba`` returns a softmax distribution over labels (trained with soft-target CE)."""
+
     name = "bilstm"
 
     def __init__(self, labels, epochs: int = 12, batch_size: int = 64, lr: float = 2e-3, max_len: int = 120,
@@ -95,7 +97,12 @@ class BiLSTMMapper(Mapper):
         sched = torch.optim.lr_scheduler.OneCycleLR(
             opt, max_lr=self.lr, total_steps=self.epochs * (len(texts) // self.batch_size + 1)
         )
-        loss_fn = nn.BCEWithLogitsLoss()
+        # Soft-target softmax cross-entropy (gold labels share the mass). From scratch,
+        # per-label BCE over 135 mostly-negative outputs stalls at the label prior.
+        def loss_fn(logits, yb):
+            target = yb / yb.sum(1, keepdim=True).clamp(min=1)
+            return -(target * logits.log_softmax(-1)).sum(1).mean()
+
         best, best_state, patience = -1.0, None, 0
         for ep in range(self.epochs):
             self.net.train()
@@ -131,7 +138,7 @@ class BiLSTMMapper(Mapper):
         self.net.eval()
         out = np.zeros((len(texts), len(self.labels)), dtype=np.float32)
         for ch, ids, _ in self._batches(list(texts)):
-            out[ch] = torch.sigmoid(self.net(ids)).numpy()
+            out[ch] = self.net(ids).softmax(-1).numpy()
         return out
 
     @torch.inference_mode()
