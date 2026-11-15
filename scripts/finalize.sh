@@ -5,6 +5,7 @@ set -u
 cd "$(dirname "$0")/.."
 while pgrep -f train_queue.sh >/dev/null; do sleep 20; done
 log() { echo "$(date +%T) $*"; }
+log "sbert";          python -u scripts/train.py sbert > artifacts/logs/sbert.log 2>&1;                  log "rc=$?"
 log "resume bert";    python -u scripts/train.py bert --resume --epochs 3    > artifacts/logs/bert_resume.log 2>&1;    log "rc=$?"
 log "resume roberta"; python -u scripts/train.py roberta --resume --epochs 2 > artifacts/logs/roberta_resume.log 2>&1; log "rc=$?"
 log "ensemble";       python scripts/ensemble.py     > artifacts/logs/ensemble.log 2>&1;  log "rc=$?"

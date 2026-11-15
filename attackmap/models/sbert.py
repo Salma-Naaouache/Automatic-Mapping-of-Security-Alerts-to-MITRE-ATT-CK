@@ -31,11 +31,12 @@ class SBertMapper(Mapper):
     name = "sbert"
 
     def __init__(self, labels, model_name="sentence-transformers/all-MiniLM-L6-v2", finetune=True,
-                 epochs: int = 1, batch_size: int = 64, temperature: float = 0.05, k: int = 15,
+                 epochs: int = 1, batch_size: int = 32, max_seq_length: int = 128, temperature: float = 0.05, k: int = 15,
                  display_name: str | None = None, kb: KnowledgeBase | None = None):
         super().__init__(labels)
         self.model_name, self.finetune, self.epochs = model_name, finetune, epochs
         self.batch_size, self.temperature, self.k = batch_size, temperature, k
+        self.max_seq_length = max_seq_length
         self.name = display_name or ("sbert" if finetune else "sbert_zeroshot")
         self.kb = kb or KnowledgeBase.load()
         self.encoder = None
@@ -48,6 +49,8 @@ class SBertMapper(Mapper):
         from sentence_transformers import SentenceTransformer
 
         self.encoder = SentenceTransformer(source, device="cpu")
+        # p95 of the corpus is ~55 words; 128 tokens keeps memory/latency bounded on CPU.
+        self.encoder.max_seq_length = self.max_seq_length
 
     def encode(self, texts: list[str]) -> np.ndarray:
         return self.encoder.encode(list(texts), batch_size=128, normalize_embeddings=True,
